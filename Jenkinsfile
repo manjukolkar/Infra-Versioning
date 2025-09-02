@@ -6,7 +6,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/manjukolkar/Infra-Versioning.git'
+                git branch: 'master', url: 'https://github.com/manjukolkar/Infra-Versioning.git'
             }
         }
         stage('Terraform Init') {
