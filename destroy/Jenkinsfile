@@ -1,0 +1,26 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_REGION = "us-east-1"
+    }
+
+    stages {
+        stage('Terraform Init') {
+            steps {
+                withAWS(region: "${AWS_REGION}", credentials: 'aws-creds') {
+                    sh 'terraform init -input=false'
+                }
+            }
+        }
+
+        stage('Terraform Destroy') {
+            steps {
+                input message: '⚠️ Are you sure you want to destroy all infra?', ok: 'Yes, destroy'
+                withAWS(region: "${AWS_REGION}", credentials: 'aws-creds') {
+                    sh 'terraform destroy -auto-approve'
+                }
+            }
+        }
+    }
+}
