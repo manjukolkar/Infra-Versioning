@@ -3,25 +3,18 @@ pipeline {
 
     environment {
         AWS_REGION = "us-east-1"
-        // Replace with the ID of the Jenkins credential you created (type = AWS credentials)
-        AWS_CREDS = credentials('aws-creds')
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'master',
-                    url: 'https://github.com/manjukolkar/Infra-Versioning.git'
+                git branch: 'master', url: 'https://github.com/manjukolkar/Infra-Versioning.git'
             }
         }
 
         stage('Terraform Init') {
             steps {
-                withEnv([
-                    "AWS_ACCESS_KEY_ID=${AWS_CREDS_USR}",
-                    "AWS_SECRET_ACCESS_KEY=${AWS_CREDS_PSW}",
-                    "AWS_DEFAULT_REGION=${AWS_REGION}"
-                ]) {
+                withAWS(credentials: 'aws-creds', region: "${AWS_REGION}") {
                     sh 'terraform init -input=false'
                 }
             }
@@ -29,11 +22,7 @@ pipeline {
 
         stage('Terraform Validate') {
             steps {
-                withEnv([
-                    "AWS_ACCESS_KEY_ID=${AWS_CREDS_USR}",
-                    "AWS_SECRET_ACCESS_KEY=${AWS_CREDS_PSW}",
-                    "AWS_DEFAULT_REGION=${AWS_REGION}"
-                ]) {
+                withAWS(credentials: 'aws-creds', region: "${AWS_REGION}") {
                     sh 'terraform validate'
                 }
             }
@@ -41,25 +30,16 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                withEnv([
-                    "AWS_ACCESS_KEY_ID=${AWS_CREDS_USR}",
-                    "AWS_SECRET_ACCESS_KEY=${AWS_CREDS_PSW}",
-                    "AWS_DEFAULT_REGION=${AWS_REGION}"
-                ]) {
-                    sh 'terraform plan -out=tfplan'
+                withAWS(credentials: 'aws-creds', region: "${AWS_REGION}") {
+                    sh 'terraform plan -input=false -out=tfplan'
                 }
             }
         }
 
         stage('Terraform Apply') {
             steps {
-                input(message: "Approve apply?", ok: "Apply")
-                withEnv([
-                    "AWS_ACCESS_KEY_ID=${AWS_CREDS_USR}",
-                    "AWS_SECRET_ACCESS_KEY=${AWS_CREDS_PSW}",
-                    "AWS_DEFAULT_REGION=${AWS_REGION}"
-                ]) {
-                    sh 'terraform apply -auto-approve tfplan'
+                withAWS(credentials: 'aws-creds', region: "${AWS_REGION}") {
+                    sh 'terraform apply -input=false -auto-approve tfplan'
                 }
             }
         }
@@ -67,7 +47,7 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: '**/terraform.tfstate*', fingerprint: true
+            archiveArtifacts artifacts: '**/*.tf', allowEmptyArchive: true
         }
     }
 }
