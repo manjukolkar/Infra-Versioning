@@ -36,19 +36,23 @@ pipeline {
             }
         }
 
-     
         stage('Approval to Proceed') {
             steps {
                 script {
                     def userInput = input(
-                        id: 'userInput',
-                        message: 'Do you want to proceed with Terraform Apply?',
+                        id: 'ApprovalInput',
+                        message: '⚠️ Do you want to proceed with Terraform Apply?',
                         parameters: [
-                            choice(name: 'PROCEED', choices: ['No', 'Yes'], description: 'Select Yes to continue')
+                            choice(
+                                name: 'CONFIRM',
+                                choices: ['No', 'Yes'],
+                                description: 'Select "Yes" to continue deployment'
+                            )
                         ]
                     )
+
                     if (userInput != 'Yes') {
-                        error("Pipeline aborted by user.")
+                        error("❌ Terraform Apply aborted by user.")
                     }
                 }
             }
