@@ -14,7 +14,7 @@ usermod -aG docker ubuntu
 
 # Install Java
 apt update
-apt install fontconfig openjdk-21-jre
+apt install fontconfig openjdk-21-jre -y
 
 # Install Jenkins
 sudo wget -O /etc/apt/keyrings/jenkins-keyring.asc \
