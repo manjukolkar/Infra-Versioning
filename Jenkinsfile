@@ -5,15 +5,9 @@ pipeline {
         AWS_REGION = "us-east-1"
     }
 
-    options {
-        timestamps()
-    }
-
     stages {
-
         stage('Checkout') {
             steps {
-                cleanWs()  
                 git branch: 'master', url: 'https://github.com/manjukolkar/Infra-Versioning.git'
             }
         }
@@ -21,19 +15,16 @@ pipeline {
         stage('Terraform Init') {
             steps {
                 withAWS(credentials: 'aws-creds', region: "${AWS_REGION}") {
-                    retry(2) {  
-                        sh '''
-                        rm -rf .terraform
-                        terraform init -input=false -reconfigure
-                        '''
-                    }
+                    sh 'terraform init -input=false'
                 }
             }
         }
 
         stage('Terraform Validate') {
             steps {
-                sh 'terraform validate'
+                withAWS(credentials: 'aws-creds', region: "${AWS_REGION}") {
+                    sh 'terraform validate'
+                }
             }
         }
 
@@ -48,22 +39,20 @@ pipeline {
         stage('Approval to Proceed') {
             steps {
                 script {
-                    timeout(time: 2, unit: 'MINUTES') {  
-                        def userInput = input(
-                            id: 'ApprovalInput',
-                            message: '⚠️ Proceed with Terraform Apply?',
-                            parameters: [
-                                choice(
-                                    name: 'CONFIRM',
-                                    choices: ['No', 'Yes'],
-                                    description: 'Select Yes to continue'
-                                )
-                            ]
-                        )
+                    def userInput = input(
+                        id: 'ApprovalInput',
+                        message: '⚠️ Do you want to proceed with Terraform Apply?',
+                        parameters: [
+                            choice(
+                                name: 'CONFIRM',
+                                choices: ['No', 'Yes'],
+                                description: 'Select "Yes" to continue deployment'
+                            )
+                        ]
+                    )
 
-                        if (userInput != 'Yes') {
-                            error("❌ Apply aborted by user.")
-                        }
+                    if (userInput != 'Yes') {
+                        error("❌ Terraform Apply aborted by user.")
                     }
                 }
             }
@@ -81,9 +70,6 @@ pipeline {
     post {
         always {
             archiveArtifacts artifacts: '**/*.tf', allowEmptyArchive: true
-        }
-        failure {
-            echo "❌ Pipeline failed. Check Terraform state or backend lock."
         }
     }
 }
