@@ -15,6 +15,7 @@ resource "aws_instance" "demo_ec2" {
   instance_type = var.ec2_instance_type
   key_name      = "my-key"
   user_data = file("${path.module}/scripts/install.sh")
+  security_groups = ["default"]
 
   tags = {
     Name        = "DemoEC2Instance"
