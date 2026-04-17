@@ -13,7 +13,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                cleanWs()   // ✅ Clean workspace
+                cleanWs()  
                 git branch: 'master', url: 'https://github.com/manjukolkar/Infra-Versioning.git'
             }
         }
@@ -21,7 +21,7 @@ pipeline {
         stage('Terraform Init') {
             steps {
                 withAWS(credentials: 'aws-creds', region: "${AWS_REGION}") {
-                    retry(2) {   // ✅ Retry for transient issues
+                    retry(2) {  
                         sh '''
                         rm -rf .terraform
                         terraform init -input=false -reconfigure
@@ -48,7 +48,7 @@ pipeline {
         stage('Approval to Proceed') {
             steps {
                 script {
-                    timeout(time: 2, unit: 'MINUTES') {   // ✅ Avoid pipeline hanging forever
+                    timeout(time: 2, unit: 'MINUTES') {  
                         def userInput = input(
                             id: 'ApprovalInput',
                             message: '⚠️ Proceed with Terraform Apply?',
